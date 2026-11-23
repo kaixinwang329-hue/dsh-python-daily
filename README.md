@@ -32,6 +32,8 @@ GitHub 搜索接口未登录额度是 10 次/分钟，一天跑一次绰绰有�
 
 ## 安装
 
+需要 DeepSeek Harness 桌面版或 `dsh web`（插件系统可用即可），Node 20+；不需要额外安装任何依赖 —— 插件没有运行时依赖，也不做构建。
+
 **方式一：本地目录（推荐）**
 
 ```bash
@@ -40,11 +42,13 @@ git clone https://github.com/kaixinwang329-hue/dsh-python-daily.git
 
 然后打开 DeepSeek Harness 的 **插件（Plugins）** 页，点 **添加插件**，选中刚克隆的目录。插件包名是 `dsh-plugin-python-daily`，装好后侧栏会多出「Python 每日情报」图标。
 
-**方式二：npm**（如果你把它发布到了 npm）
+**方式二：npm**（发布到 npm 之后）
 
 ```
 插件 → 添加插件 → 输入 dsh-plugin-python-daily
 ```
+
+**方式三：让 Agent 装**：把目录路径告诉 DSH，让它执行 `plugin_manager` → `install_bundle` → 目标填这个目录的绝对路径。
 
 装完刷新页面即可看到侧栏图标；如果没出现，到插件页确认 `python-daily` 这一行是启用的。
 
@@ -120,6 +124,13 @@ npm run test:all     # 再加两套联网冒烟（host 27 项、增量 10 项）
 ```
 
 三套脚本都会把 `DSH_HOME` 和 `PYTHON_DAILY_DATA_DIR` 指到临时目录，不会碰你真实的日报；联网那两套在断网时会失败在「条目有 title/url/id」。
+
+发布新版本：改 `package.json` 的 `version`、补一条 `CHANGELOG.md`，然后
+
+```bash
+git tag v2.1.0 && git push origin main --tags   # 用目录安装的同事 git pull 后重启插件即可
+npm publish --access public                     # 可选：发到 npm，别人就能直接按包名装
+```
 
 ## 限制
 
