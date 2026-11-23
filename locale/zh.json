@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Python 每日情报",
+    "description": "每天自动汇总 Python 官方博客、CPython 新版本、PEP 动态、PyPI 发版与 GitHub 上冒头的 Python 项目，整理成侧栏日报并写出本地 Markdown 存档。点侧栏的「Python 每日情报」图标打开：今日 / 历史 / 设置三个视图，「立即采集」按钮随时手动跑一轮；只在插件运行时联网，默认每天 09:00 采集一次。",
+    "detail": "docs/DETAIL.zh.md"
+  }
+}

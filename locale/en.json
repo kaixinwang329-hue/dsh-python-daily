@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Python Daily",
+    "description": "A daily digest of the Python Insider blog, new CPython releases, PEP activity, PyPI package releases and trending GitHub Python projects — shown in a side panel and written to a local Markdown report. Open the “Python Daily” icon in the sidebar for Today / History / Settings, and use “Collect now” to refresh on demand; it only touches the network while the plugin is running, once a day at 09:00 by default.",
+    "detail": "docs/DETAIL.md"
+  }
+}

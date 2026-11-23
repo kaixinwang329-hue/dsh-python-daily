@@ -1,0 +1,60 @@
+{
+  "name": "dsh-plugin-python-daily",
+  "version": "2.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Python daily digest for DeepSeek Harness: Python Insider blog, CPython releases, PEP activity, PyPI releases and trending GitHub projects, collected into a daily Markdown report.",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "python",
+    "digest",
+    "news"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaixinwang329-hue/dsh-python-daily.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kaixinwang329-hue/dsh-python-daily/issues"
+  },
+  "homepage": "https://github.com/kaixinwang329-hue/dsh-python-daily#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check client.js",
+    "test": "node tests/smoke-client.mjs",
+    "test:all": "node tests/smoke-host.mjs && node tests/smoke-delta.mjs && node tests/smoke-client.mjs"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale",
+    "docs",
+    "tests",
+    "icon.svg",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  }
+}

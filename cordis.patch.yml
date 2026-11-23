@@ -1,0 +1,3 @@
+- insert:
+    - id: python-daily
+      name: 'dsh-plugin-python-daily'
