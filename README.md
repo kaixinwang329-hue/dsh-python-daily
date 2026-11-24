@@ -1,5 +1,8 @@
 # dsh-plugin-python-daily
 
+[![ci](https://github.com/kaixinwang329-hue/dsh-python-daily/actions/workflows/ci.yml/badge.svg)](https://github.com/kaixinwang329-hue/dsh-python-daily/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 [DeepSeek Harness](https://github.com/deepseek-ai) 的 Python 每日情报插件：侧栏多一个页面，每天 09:00 自动把 Python 世界的动静捞一遍，整理成日报卡片，同时写出本地 Markdown 存档。
 
 > **English**: A daily Python digest plugin for DeepSeek Harness. It collects the Python Insider blog, CPython/Python releases, PEP activity, PyPI package releases and trending GitHub Python projects, renders them in a sidebar panel (today / history / settings) and writes one Markdown report per day. Install by adding this directory in **Plugins → Add plugin**. Default schedule: 09:00 local time, incremental cursors per source, retry after failure. UI text is localized (中文 / English).
