@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- 修复 PEP 440 比较里 dev 版本的排序错误：此前 `1.0.dev6` 会被排到 `1.0` 与 `1.0a1` 之后，可能把开发版误报成新版本；现在按 `dev < a < b < rc < 正式版 < post` 严格排序。
+- PyPI 退路（`/pypi/<name>/json`）改用最近一次上传时间；版本号缺失时链接回项目首页而不是坏链。
+- GitHub 新建仓库的搜索窗口改用本地日期（此前按 UTC 截断，跨时区会漏掉本地当天凌晨的仓库）。
+- 采集流程直接复用本次运行已加载的 state，去掉每次运行里多余的状态文件读取。
+- `POST /config` 收到非法 JSON 时返回 400 而不是 500。
+- 版本比较逻辑独立到 `src/version.mjs` 并新增离线单测；CI 增加 Node 20/22 矩阵与并发去重。
+
 ## 2.0.0 — 首次公开发布
 
 - 包名改为 `dsh-plugin-python-daily`，以 MIT 许可开源，补上 LICENSE、CHANGELOG、CI 与完整的安装说明。

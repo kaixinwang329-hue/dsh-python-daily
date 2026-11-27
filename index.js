@@ -22,6 +22,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, isAbsolute, join } from 'node:path'
 import { homedir } from 'node:os'
+import { compareVersions, isPrereleaseVersion, versionOfTitle } from './src/version.mjs'
 
 export const name = 'python-daily'
 export const inject = ['webServer']
@@ -33,7 +34,7 @@ const PLUGIN_ID = 'python-daily'
 // 2. 前缀末尾不能带斜杠：路由匹配是「等于本路径，或以本路径 + / 开头」，
 //    写成 /python-daily/ 反而只匹配到它自己。
 const ROUTE_PREFIX = '/python-daily'
-const USER_AGENT = 'dsh-python-daily/1.0 (personal digest)'
+const USER_AGENT = 'dsh-python-daily/2.0 (personal digest)'
 const BOOT_DELAY_MS = 5_000
 const CHECK_INTERVAL_MS = 60_000
 const RETRY_AFTER_MS = 15 * 60_000
@@ -575,11 +576,11 @@ async function fetchReleases(since, config) {
 }
 
 /** PEP：新建（created 落在窗口内）+ 状态变更（与上一份基线比对） */
-async function fetchPeps(since) {
+async function fetchPeps(since, state) {
   const url = 'https://peps.python.org/api/peps.json'
   const payload = await fetchJson(url, 30_000)
   const source = payload && typeof payload === 'object' ? payload : {}
-  const previous = loadState().seen?.pepStatus ?? {}
+  const previous = state?.seen?.pepStatus ?? {}
   const statuses = {}
   const fresh = []
   const changed = []
@@ -623,62 +624,6 @@ async function fetchPeps(since) {
   fresh.sort(compareItems)
   changed.sort((left, right) => right.number - left.number)
   return { items: [...fresh, ...changed].slice(0, 14), statuses }
-}
-
-/** 标题可能只是版本号（2.34.2），也可能带项目名（requests 2.34.2） */
-function versionOfTitle(name, title) {
-  const text = String(title ?? '').trim()
-  const lowered = text.toLowerCase()
-  const prefix = `${String(name ?? '').toLowerCase()} `
-  return (lowered.startsWith(prefix) ? text.slice(prefix.length) : text).trim()
-}
-
-/** PEP 440 的轻量解析：只要够比大小，不追求把规范实现全 */
-function parseVersion(raw) {
-  const text = String(raw ?? '').trim().replace(/^v/i, '')
-  const match = text.match(/^(\d+(?:\.\d+)*)(?:(a|b|rc)(\d+))?(?:\.?(dev|post)(\d+))?$/i)
-  if (!match) return null
-  const release = match[1].split('.').map((part) => Number(part))
-  const preTag = String(match[2] ?? '').toLowerCase()
-  const preNumber = Number(match[3] ?? 0)
-  const postTag = String(match[4] ?? '').toLowerCase()
-  const postNumber = Number(match[5] ?? 0)
-  // dev 挂在版本号后面（1.0.dev6）：1.0.dev6 < 1.0a1
-  const isDev = preTag === '' && postTag === 'dev'
-  // 序：dev < a < b < rc < 正式版 < 正式版.postN
-  const preRank = preTag === 'a' ? 1 : preTag === 'b' ? 2 : preTag === 'rc' ? 3 : preTag === '' ? 4 : 0
-  const postRank = postTag === 'post' ? 1 : 0
-  return {
-    release,
-    preRank,
-    preNumber,
-    postRank,
-    postNumber,
-    dev: isDev,
-    prerelease: preTag !== '' || isDev,
-  }
-}
-
-/** 返回 -1 / 0 / 1；解析不了就返回 null（调用方自己决定怎么办） */
-function compareVersions(left, right) {
-  const a = parseVersion(left)
-  const b = parseVersion(right)
-  if (!a || !b) return null
-  const size = Math.max(a.release.length, b.release.length)
-  for (let index = 0; index < size; index += 1) {
-    const x = a.release[index] ?? 0
-    const y = b.release[index] ?? 0
-    if (x !== y) return x < y ? -1 : 1
-  }
-  if (a.preRank !== b.preRank) return a.preRank < b.preRank ? -1 : 1
-  if (a.preNumber !== b.preNumber) return a.preNumber < b.preNumber ? -1 : 1
-  if (a.postRank !== b.postRank) return a.postRank < b.postRank ? -1 : 1
-  if (a.postNumber !== b.postNumber) return a.postNumber < b.postNumber ? -1 : 1
-  return 0
-}
-
-function isPrereleaseVersion(version) {
-  return parseVersion(version)?.prerelease === true
 }
 
 /**
@@ -732,10 +677,11 @@ async function latestReleaseOf(name) {
     .map((file) => String(file?.upload_time_iso_8601 ?? '').trim())
     .filter(Boolean)
     .sort()
-  const at = uploads.length ? new Date(uploads[0]) : null
+  const latestUpload = uploads.length ? uploads[uploads.length - 1] : null
+  const at = latestUpload ? new Date(latestUpload) : null
   return {
     version,
-    url: `https://pypi.org/project/${name}/${version}/`,
+    url: version ? `https://pypi.org/project/${name}/${version}/` : `https://pypi.org/project/${name}/`,
     at: at && Number.isFinite(at.getTime()) ? at : null,
     summary: trimText(info.summary ?? '', 200),
     note: feedError,
@@ -743,9 +689,9 @@ async function latestReleaseOf(name) {
 }
 
 /** PyPI：只报「版本号变了」的包；第一次见到某个包只记基线，不当作更新 */
-async function fetchPackages(config) {
+async function fetchPackages(config, state) {
   const names = [...new Set(Array.isArray(config.packages) ? config.packages : DEFAULT_PACKAGES)].slice(0, 40)
-  const previous = loadState().seen?.packages ?? {}
+  const previous = state?.seen?.packages ?? {}
   const versions = { ...previous }
   const items = []
   const failures = []
@@ -900,7 +846,7 @@ async function fetchTrendingPython() {
 }
 
 async function fetchGithubSearch(since) {
-  const created = since.toISOString().slice(0, 10)
+  const created = keyOfDay(since)
   const query = `language:python created:>=${created}`
   const search = new URLSearchParams({ q: query, sort: 'stars', order: 'desc', per_page: '50' })
   const payload = await fetchJson(`${GITHUB_SEARCH}?${search.toString()}`, 25_000, githubHeaders())
@@ -938,8 +884,8 @@ async function fetchGithubSearch(since) {
 const COLLECTORS = {
   blog: ({ windows, options }) => fetchBlog(windows.blog, options),
   releases: ({ windows, config }) => fetchReleases(windows.releases, config),
-  peps: ({ windows }) => fetchPeps(windows.peps),
-  packages: ({ config }) => fetchPackages(config),
+  peps: ({ windows, state }) => fetchPeps(windows.peps, state),
+  packages: ({ config, state }) => fetchPackages(config, state),
   github: ({ windows }) => fetchGithub(windows.github),
 }
 
@@ -1094,7 +1040,7 @@ async function executeRunInner(trigger) {
   await Promise.all(
     SOURCE_KEYS.map(async (key) => {
       try {
-        const result = await COLLECTORS[key]({ windows, config, options: { firstRun } })
+        const result = await COLLECTORS[key]({ windows, config, options: { firstRun }, state })
         collected[key] = result
         sources[key] = { ok: true, count: result.items.length, note: result.note ?? '' }
       } catch (error) {
@@ -1350,7 +1296,13 @@ async function handleRequest(request, response) {
     }
 
     if (tail === 'config' && method === 'POST') {
-      const body = await readJsonBody(request)
+      let body = null
+      try {
+        body = await readJsonBody(request)
+      } catch (error) {
+        sendJson(response, 400, { ok: false, error: messageOf(error) })
+        return
+      }
       const config = saveConfig(body ?? {})
       sendJson(response, 200, {
         ok: true,

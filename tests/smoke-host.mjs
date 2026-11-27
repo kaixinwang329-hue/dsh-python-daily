@@ -149,6 +149,9 @@ function check(name, ok, detail) {
   check('config.minute=30', data && data.config.minute === 30, '')
   check('packages 去重小写', data && JSON.stringify(data.config.packages) === JSON.stringify(['requests', 'ruff']), JSON.stringify(data && data.config.packages))
   check('reportsDir 默认值', data && data.config.reportsDir === '', JSON.stringify(data && data.config.reportsDir))
+
+  const bad = await call('POST', '/python-daily/config', '{not json')
+  check('POST config 非法 JSON 400', bad.status === 400, `status=${bad.status}`)
 }
 
 // 5. POST refresh（真联网）

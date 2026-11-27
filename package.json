@@ -24,9 +24,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "check": "node --check index.js && node --check client.js",
-    "test": "node tests/smoke-client.mjs",
-    "test:all": "node tests/smoke-host.mjs && node tests/smoke-delta.mjs && node tests/smoke-client.mjs"
+    "check": "node --check index.js && node --check client.js && node --check src/version.mjs",
+    "test": "node tests/version-order.mjs && node tests/smoke-client.mjs",
+    "test:all": "node tests/version-order.mjs && node tests/smoke-host.mjs && node tests/smoke-delta.mjs && node tests/smoke-client.mjs"
   },
   "exports": {
     ".": "./index.js",
@@ -38,6 +38,7 @@
   "files": [
     "index.js",
     "client.js",
+    "src",
     "cordis.patch.yml",
     "locale",
     "docs",
