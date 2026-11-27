@@ -9,19 +9,27 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   offline:
-    name: syntax + client smoke
+    name: syntax + unit + client smoke (node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
       - name: Syntax check
         run: npm run check
-      - name: Client smoke test (no network)
-        run: node tests/smoke-client.mjs
+      - name: Unit + client smoke tests (no network)
+        run: npm test
 
   network:
     name: full smoke (network)
@@ -34,5 +42,6 @@ jobs:
           node-version: 22
       - name: Host + delta smoke tests
         run: |
+          node tests/version-order.mjs
           node tests/smoke-host.mjs
           node tests/smoke-delta.mjs

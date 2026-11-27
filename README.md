@@ -121,8 +121,8 @@ data-dir.txt           可选：把数据目录指到别处
 改完代码在插件管理器里把 `python-daily` 停用再启用一次即可生效（不需要重启应用）。
 
 ```bash
-npm run check        # node --check 两个入口
-npm test             # 离线：客户端模块形态 / 槽位注册 / 首屏 / 中英词条（10 项）
+npm run check        # node --check 两个入口 + 版本模块
+npm test             # 离线：PEP 440 版本排序 + 客户端冒烟（模块形态 / 槽位 / 首屏 / 中英词条）
 npm run test:all     # 再加两套联网冒烟（host 27 项、增量 10 项）
 ```
 
